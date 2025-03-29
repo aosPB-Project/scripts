@@ -1,0 +1,52 @@
+name: Migrate Repositories
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_org:
+        description: 'Source Organization'
+        required: true
+      dest_org:
+        description: 'Destination Organization'
+        required: true
+      branch:
+        description: 'Common branch'
+        required: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run Migration Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          SOURCE_ORG: ${{ github.event.inputs.source_org }}
+          DEST_ORG: ${{ github.event.inputs.dest_org }}
+          BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          python migrate.py <<< "$GITHUB_TOKEN
+          $SOURCE_ORG
+          $DEST_ORG
+          $BRANCH"
+
+      - name: Upload Missing Repos List (if exists)
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: missing_repositories
+          path: missing_repos.txt
+          if-no-files-found: ignore
