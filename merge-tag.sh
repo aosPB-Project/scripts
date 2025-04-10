@@ -51,16 +51,20 @@ for repo in $REPOS; do echo;
         continue
     fi
 
-    if ! grep -q -e "path=\"$repo\"" -e "name=\"$repo\"" manifest/default.xml; then
+    if [[ "$repo" != "manifest" ]] && ! grep -q -e "path=\"$repo\"" -e "name=\"$repo\"" manifest/default.xml; then
         echo "${red}$repo not found in AOSP manifest, skipping..."
         continue
     fi
 
     # this is where the fun begins
     echo "${blu}Merging ${repo}..."
-    name=$(grep "path=\"$repo\"" manifest/default.xml | sed -e 's/.*name="//' -e 's/".*//')
-    if [[ -z $name ]]; then
-        name=$(grep "name=\"$repo\"" manifest/default.xml | sed -e 's/.*name="//' -e 's/".*//')
+    if [[ "$repo" == "manifest" ]]; then
+        name="platform/manifest"
+    else
+        name=$(grep "path=\"$repo\"" manifest/default.xml | sed -e 's/.*name="//' -e 's/".*//')
+        if [[ -z $name ]]; then
+            name=$(grep "name=\"$repo\"" manifest/default.xml | sed -e 's/.*name="//' -e 's/".*//')
+        fi
     fi
 
     git -C $repo checkout -q $BRANCH &> /dev/null || echo "${red}$repo checkout failed!"
